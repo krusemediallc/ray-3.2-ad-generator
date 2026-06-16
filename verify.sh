@@ -3,19 +3,23 @@
 # Run after install.sh and after editing .env.
 #
 # Checks:
-#   1. .env exists with all three required vars
+#   1. .env exists with all required vars (Luma/Meta hard, ElevenLabs soft)
 #   2. AD_ACCOUNT_ID has the right format
-#   3. Skill is symlinked into ~/.claude/skills/
+#   3. All 5 skills are symlinked into ~/.claude/skills/
 #   4. meta CLI auth works
 #   5. Luma uni-1 API key authenticates
+#   6. Video-skill tooling present (ffmpeg/ffprobe, Node 22+) — soft
 #
-# Exit code 0 if all pass, 1 otherwise.
+# Hard checks (the image + ray3-video-ad skills) set the exit code.
+# Soft checks (warn only) cover the claymation-ad + cinematic-ad film skills,
+# which not every user needs. Exit code 0 if all hard checks pass, 1 otherwise.
 
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-green() { printf "\033[32m%s\033[0m\n" "$*"; }
-red()   { printf "\033[31m%s\033[0m\n" "$*"; }
+green()  { printf "\033[32m%s\033[0m\n" "$*"; }
+red()    { printf "\033[31m%s\033[0m\n" "$*"; }
+yellow() { printf "\033[33m%s\033[0m\n" "$*"; }
 
 cd "$REPO_ROOT"
 fail=0
@@ -36,6 +40,14 @@ for var in LUMA_API_KEY ACCESS_TOKEN AD_ACCOUNT_ID; do
   fi
 done
 
+# 1b. ElevenLabs key — soft: only the video film skills need it.
+if [[ -n "${ELEVENLABS_API_KEY:-}" ]]; then
+  green "ok   ELEVENLABS_API_KEY present (claymation-ad + cinematic-ad)"
+else
+  yellow "warn ELEVENLABS_API_KEY empty — needed for claymation-ad + cinematic-ad (VO/SFX/music)."
+  yellow "     Fine to skip if you only use the image skills or ray3-video-ad."
+fi
+
 # 2. AD_ACCOUNT_ID format
 if [[ -n "${AD_ACCOUNT_ID:-}" ]]; then
   if [[ ! "$AD_ACCOUNT_ID" =~ ^act_[0-9]+$ ]]; then
@@ -46,8 +58,8 @@ if [[ -n "${AD_ACCOUNT_ID:-}" ]]; then
   fi
 fi
 
-# 3. Skill symlinks (both skills)
-for skill in uni1-image-ad image-ad-clone; do
+# 3. Skill symlinks (all 5 skills)
+for skill in uni1-image-ad image-ad-clone ray3-video-ad claymation-ad cinematic-ad; do
   dest="$HOME/.claude/skills/$skill"
   expected="$REPO_ROOT/skills/$skill"
   if [[ -L "$dest" && "$(readlink "$dest")" == "$expected" ]]; then
@@ -93,6 +105,22 @@ if [[ -n "${LUMA_API_KEY:-}" ]]; then
     fail=1
   fi
   rm -f /tmp/uni1-verify.json
+fi
+
+# 6. Video-skill tooling — soft: needed only by claymation-ad + cinematic-ad.
+if command -v ffmpeg >/dev/null 2>&1 && command -v ffprobe >/dev/null 2>&1; then
+  green "ok   ffmpeg/ffprobe present (claymation-ad + cinematic-ad assembly)"
+else
+  yellow "warn ffmpeg/ffprobe missing — claymation-ad + cinematic-ad assembly will fail."
+  yellow "     macOS: brew install ffmpeg"
+fi
+
+NODE_MAJOR=$(node -v 2>/dev/null | sed 's/v\([0-9]*\).*/\1/')
+if [[ -n "$NODE_MAJOR" && "$NODE_MAJOR" -ge 22 ]]; then
+  green "ok   node $(node -v) present (cinematic-ad motion-graphic supers)"
+else
+  yellow "warn Node 22+ missing — cinematic-ad supers (npx hyperframes) need it."
+  yellow "     macOS: brew install node"
 fi
 
 echo ""

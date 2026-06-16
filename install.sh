@@ -3,8 +3,11 @@
 #
 # 1. Checks prerequisites (Python 3.12+, uv)
 # 2. Installs the Meta Ads CLI via uv if not present
-# 3. Symlinks ./skills/uni1-image-ad into ~/.claude/skills/
+# 3. Symlinks all 5 skills into ~/.claude/skills/
 # 4. Creates .env from .env.example if missing
+#
+# Also warns (non-fatally) about ffmpeg/ffprobe + Node 22+, which the video
+# film skills (claymation-ad, cinematic-ad) need but the image skills don't.
 #
 # Does NOT touch credentials. Run ./verify.sh after editing .env to confirm
 # everything is wired up.
@@ -49,7 +52,25 @@ fi
 META_VER=$(meta --version 2>/dev/null | awk '{print $3}')
 green "ok   meta $META_VER detected"
 
-# 4. Symlink the skills (both uni1-image-ad and image-ad-clone)
+# 3b. Optional video-skill tooling (ffmpeg/ffprobe, Node 22+) — warn only.
+#     claymation-ad + cinematic-ad shell out to ffmpeg for assembly; cinematic-ad
+#     uses Node 22+ (npx hyperframes) for motion-graphic supers. The image skills
+#     and ray3-video-ad don't need either, so a miss here is non-fatal.
+if command -v ffmpeg >/dev/null 2>&1 && command -v ffprobe >/dev/null 2>&1; then
+  green "ok   ffmpeg/ffprobe detected (claymation-ad + cinematic-ad)"
+else
+  yellow "→ ffmpeg/ffprobe not found — needed for claymation-ad + cinematic-ad."
+  yellow "    macOS: brew install ffmpeg"
+fi
+NODE_MAJOR=$(node -v 2>/dev/null | sed 's/v\([0-9]*\).*/\1/')
+if [[ -n "$NODE_MAJOR" && "$NODE_MAJOR" -ge 22 ]]; then
+  green "ok   node $(node -v) detected (cinematic-ad supers)"
+else
+  yellow "→ Node 22+ not found — needed for cinematic-ad motion-graphic supers."
+  yellow "    macOS: brew install node"
+fi
+
+# 4. Symlink the skills (all 5)
 DEST_DIR="$HOME/.claude/skills"
 mkdir -p "$DEST_DIR"
 
@@ -94,11 +115,12 @@ green "=== install complete ==="
 echo ""
 echo "Next steps:"
 echo "  1. Edit .env and fill in:"
-echo "     LUMA_API_KEY     get from https://platform.lumalabs.ai → API keys"
-echo "     ACCESS_TOKEN     Meta system user token; see README.md → 'Meta token setup'"
-echo "     AD_ACCOUNT_ID    after auth: meta ads adaccount list (format: act_<numeric>)"
+echo "     LUMA_API_KEY       get from https://platform.lumalabs.ai → API keys"
+echo "     ACCESS_TOKEN       Meta system user token; see README.md → 'Meta token setup'"
+echo "     AD_ACCOUNT_ID      after auth: meta ads adaccount list (format: act_<numeric>)"
+echo "     ELEVENLABS_API_KEY only for claymation-ad / cinematic-ad (VO/SFX/music)"
 echo ""
 echo "  2. Run ./verify.sh to confirm everything is wired correctly."
 echo ""
 echo "  3. IMPORTANT: open a fresh Claude Code session in this repo so the"
-echo "     skill loads. Then ask: 'make a uni-1 image ad'."
+echo "     skills load. Then ask: 'make a uni-1 image ad' or 'make a ray 3.2 video ad'."

@@ -20,10 +20,18 @@ The project is built around Luma's models specifically — uni-1 for images, ray
 
 ## What's in the box
 
-Two complementary Claude Code skills:
+Five complementary Claude Code skills.
+
+**Image skills:**
 
 - **`./skills/uni1-image-ad/`** — the **template-using** skill. Generates a uni-1 image and uploads it as a paused Meta ad creative. Clones an existing ad's structure (page, ad set, link, CTA), generates the new image (optionally grounded on your brand's product photo), writes fresh ad copy informed by your account's top spenders, and creates the ad. Includes 4 helper scripts and 3 reference docs (7-template prompt library, 15 ad-copy frameworks, Meta CLI flag reference).
 - **`./skills/image-ad-clone/`** — the **template-creating** skill. Take any existing image ad → reverse-engineer it into a parameterizable prompt template → append it to the prompt library so `uni1-image-ad` can reuse the format with any brand. Iterates against the original to validate, then tests the generalized version with a different brand before saving.
+
+**Video skills (ray-3.2, same `.env` + cost-gate conventions):**
+
+- **`./skills/ray3-video-ad/`** — single ray-3.2 clips: product b-roll, image-to-video, restyles, and aspect-ratio reframes. Cost-gated (`--dry-run` first; clips cost $0.15–$3.60). Generation/review only — Meta upload for video isn't wired yet. Needs only `LUMA_API_KEY`.
+- **`./skills/claymation-ad/`** — multi-beat claymation story films with consistent characters and full ElevenLabs audio (VO + SFX + score), assembled with ffmpeg. Needs `ELEVENLABS_API_KEY` + `ffmpeg`. Validated by "The Lab" (45.7s, 12 beats, ~$5.50 in Luma credits).
+- **`./skills/cinematic-ad/`** — fast-cut trailer-style product ads with movie-trailer VO, sound design, original score, and motion-graphic supers. Needs `ELEVENLABS_API_KEY` + `ffmpeg` + Node 22+ (HyperFrames supers). Validated by "Stitched" (15s, 7 shots, ~$4.15 all-in).
 
 Plus:
 
@@ -33,11 +41,21 @@ Plus:
 
 ## Prerequisites
 
+**Core (every skill):**
 - macOS (the helper script uses `sips` for image dimension probing; everything else is portable)
 - Python 3.13 + [`uv`](https://docs.astral.sh/uv/) — `brew install uv`
-- A Luma uni-1 API key — [platform.lumalabs.ai](https://platform.lumalabs.ai)
-- A Meta system user access token (see [Meta token setup](#meta-token-setup) below)
+- A Luma API key (uni-1 images + ray-3.2 video) — [platform.lumalabs.ai](https://platform.lumalabs.ai)
 - Claude Code with skill support
+
+**Image skill (`uni1-image-ad`) — for the Meta upload step:**
+- A Meta system user access token (see [Meta token setup](#meta-token-setup) below)
+
+**Video film skills (`claymation-ad`, `cinematic-ad`):**
+- An ElevenLabs API key (VO / SFX / music) — [elevenlabs.io](https://elevenlabs.io) → Profile → API key
+- `ffmpeg` + `ffprobe` (clip assembly + audio mux) — `brew install ffmpeg`
+- Node 22+ (`cinematic-ad` motion-graphic supers via HyperFrames) — `brew install node`
+
+`ray3-video-ad` (single clips) needs only the core deps — no Meta token, ElevenLabs key, ffmpeg, or Node. `install.sh` warns (non-fatally) if ffmpeg or Node is missing; `verify.sh` reports the ElevenLabs key and video tooling as soft checks that don't fail the run.
 
 ## Quickstart
 
@@ -59,6 +77,7 @@ $EDITOR .env
 #    LUMA_API_KEY=luma-api-...     from platform.lumalabs.ai → API keys
 #    ACCESS_TOKEN=...              Meta system user token; see "Meta token setup" below
 #    AD_ACCOUNT_ID=act_...         after Meta auth: meta ads adaccount list
+#    ELEVENLABS_API_KEY=...        only for claymation-ad / cinematic-ad (VO/SFX/music)
 
 # 4. Verify everything is wired correctly
 ./verify.sh
