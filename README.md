@@ -12,6 +12,13 @@ A Claude Code workbench that generates finished ad creatives end-to-end with **L
 
 Start with [`CLAUDE.md`](./CLAUDE.md) for the agent-facing map of the whole workbench. The sections below document the original image workflow; the video skills follow the same conventions (`.env` keys, cost gates, paused-only Meta mutations).
 
+> ### 👉 Sign up for Luma here
+> **Everything in this repo runs on Luma (uni-1 + ray-3.2). Create your account and get your API key using this link:**
+>
+> ### **[➡️ lumalabs.ai — sign up](https://lumalabs.ai/app?utm_source=influencer&utm_medium=linkedin&utm_campaign=mrpaidsocial-ray-3_2&utm_content=faved&from_faved=true)**
+>
+> Then grab your key from the dashboard → API keys and drop it into `.env` as `LUMA_API_KEY`.
+
 ---
 
 The image skill clones an existing ad's structure (page, ad set, link, CTA), generates a new uni-1 image (optionally grounded on your brand's product photo), writes fresh ad copy informed by your account's top-spending ads, and creates the ad **paused** for you to review and launch.
@@ -44,7 +51,7 @@ Plus:
 **Core (every skill):**
 - macOS (the helper script uses `sips` for image dimension probing; everything else is portable)
 - Python 3.13 + [`uv`](https://docs.astral.sh/uv/) — `brew install uv`
-- A Luma API key (uni-1 images + ray-3.2 video) — [platform.lumalabs.ai](https://platform.lumalabs.ai)
+- A Luma API key (uni-1 images + ray-3.2 video) — **[sign up at lumalabs.ai](https://lumalabs.ai/app?utm_source=influencer&utm_medium=linkedin&utm_campaign=mrpaidsocial-ray-3_2&utm_content=faved&from_faved=true)**, then dashboard → API keys
 - Claude Code with skill support
 
 **Image skill (`uni1-image-ad`) — for the Meta upload step:**
@@ -74,7 +81,7 @@ cd uni1-image-ad
 
 # 3. Edit .env with your credentials
 $EDITOR .env
-#    LUMA_API_KEY=luma-api-...     from platform.lumalabs.ai → API keys
+#    LUMA_API_KEY=luma-api-...     sign up at https://lumalabs.ai/app?utm_source=influencer&utm_medium=linkedin&utm_campaign=mrpaidsocial-ray-3_2&utm_content=faved&from_faved=true → dashboard → API keys
 #    ACCESS_TOKEN=...              Meta system user token; see "Meta token setup" below
 #    AD_ACCOUNT_ID=act_...         after Meta auth: meta ads adaccount list
 #    ELEVENLABS_API_KEY=...        only for claymation-ad / cinematic-ad (VO/SFX/music)
